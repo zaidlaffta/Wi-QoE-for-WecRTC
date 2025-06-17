@@ -1,0 +1,119 @@
+✅ Step-by-Step: Collecting QoE from Jitsi Meet
+1. Join or Start a Meeting
+Go to https://meet.jit.si or your self-hosted instance.
+
+Create or join a room.
+
+Make sure you and at least one other participant have both camera and mic ON.
+
+2. Open Chrome DevTools
+On your keyboard, press:
+
+Cmd + Option + J (Mac)
+
+Ctrl + Shift + J or F12 (Windows/Linux)
+
+Go to the Console tab.
+
+3. Paste and Run the Sampling Script
+Use the script below to log QoE metrics every 5 seconds.
+
+🔁 Periodic QoE Sampling Script (Every 5 Seconds)
+js
+Copy
+Edit
+let qoeInterval;
+let sampleCount = 0;
+
+function formatQoEStats(stats) {
+  const result = {
+    video: {},
+    audio: {},
+    connection: {}
+  };
+
+  for (const stat of stats.values()) {
+    if (stat.type === "inbound-rtp" && stat.kind === "video") {
+      result.video = {
+        bitrate_kbps: stat.bytesReceived ? ((stat.bytesReceived * 8) / 1024).toFixed(2) : "N/A",
+        jitter_ms: stat.jitter ? (stat.jitter * 1000).toFixed(2) : "N/A",
+        packetsLost: stat.packetsLost,
+        framesPerSecond: stat.framesPerSecond ?? "N/A"
+      };
+    }
+
+    if (stat.type === "inbound-rtp" && stat.kind === "audio") {
+      result.audio = {
+        jitter_ms: stat.jitter ? (stat.jitter * 1000).toFixed(2) : "N/A",
+        packetsLost: stat.packetsLost
+      };
+    }
+
+    if (stat.type === "candidate-pair" && stat.state === "succeeded" && stat.nominated) {
+      result.connection = {
+        rtt_ms: stat.currentRoundTripTime ? (stat.currentRoundTripTime * 1000).toFixed(2) : "N/A",
+        availableOutgoingBitrate_kbps: stat.availableOutgoingBitrate ? (stat.availableOutgoingBitrate / 1000).toFixed(2) : "N/A",
+        availableIncomingBitrate_kbps: stat.availableIncomingBitrate ? (stat.availableIncomingBitrate / 1000).toFixed(2) : "N/A"
+      };
+    }
+  }
+
+  return result;
+}
+
+async function collectQoESample() {
+  const pcMap = APP.conference._room.rtc.peerConnections;
+  const pcs = [];
+
+  for (const lp of pcMap.values()) {
+    if (lp && lp.peerconnection) {
+      pcs.push(lp.peerconnection);
+    }
+  }
+
+  for (let i = 0; i < pcs.length; i++) {
+    const pc = pcs[i];
+    const stats = await pc.getStats();
+    const formatted = formatQoEStats(stats);
+    sampleCount++;
+    console.log(`📦 Sample #${sampleCount} for Peer #${i + 1}:`, formatted);
+  }
+}
+
+function startQoESampling(intervalMs = 5000) {
+  if (qoeInterval) {
+    clearInterval(qoeInterval);
+  }
+  sampleCount = 0;
+  qoeInterval = setInterval(collectQoESample, intervalMs);
+  console.log(`⏱️ QoE sampling started every ${intervalMs / 1000} seconds.`);
+}
+
+function stopQoESampling() {
+  clearInterval(qoeInterval);
+  console.log("🛑 QoE sampling stopped.");
+}
+🟢 To Start Sampling:
+Paste and run this in the console:
+
+js
+Copy
+Edit
+startQoESampling(5000); // Sample every 5 seconds
+🔴 To Stop Sampling:
+js
+Copy
+Edit
+stopQoESampling();
+✅ Output
+Every 5 seconds you'll get:
+
+css
+Copy
+Edit
+📦 Sample #3 for Peer #1:
+{
+  video: { bitrate_kbps: "403.12", jitter_ms: "12.34", ... },
+  audio: { jitter_ms: "7.98", ... },
+  connection: { rtt_ms: "86.21", ... }
+}
