@@ -1,4 +1,4 @@
-✅ Step-by-Step: Collecting QoE from Jitsi Meet
+Step-by-Step: Collecting QoE from Jitsi Meet
 1. Join or Start a Meeting
 Go to https://meet.jit.si or your self-hosted instance.
 
@@ -7,9 +7,7 @@ Create or join a room.
 Make sure you and at least one other participant have both camera and mic ON.
 
 2. Open Chrome DevTools
-On your keyboard, press:
-
-Cmd + Option + J (Mac)
+On your keyboard, press: Cmd + Option + J (Mac)
 
 Ctrl + Shift + J or F12 (Windows/Linux)
 
