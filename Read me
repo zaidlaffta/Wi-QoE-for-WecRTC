@@ -122,7 +122,7 @@ function downloadQoECsv() {
 // Start sampling:  
 let interval = setInterval(sampleQoE, 4000);
 // Stop sampling:    
-clearInterval(interval);
+clearInterval(4000);
 // Download CSV:    
 downloadQoECsv();
 
